@@ -1,225 +1,177 @@
+#include <algorithm>
+#include <cctype>
+#include <iomanip>
 #include <iostream>
-
-#include <string> 
-
+#include <string>
 #include <vector>
-
-
 
 using namespace std;
 
+// Asks until the user enters a valid positive whole number.
+int readPositiveInt(const string &prompt)
+{
+    int value;
+    cout << prompt;
+    while (!(cin >> value) || value <= 0)
+    {
+        cout << "Invalid input! Please enter a positive number: ";
+        cin.clear();
+        cin.ignore(10000, '\n');
+    }
+    cin.ignore(10000, '\n'); // remove the leftover newline
+    return value;
+}
 
+// Converts a letter ("B+") or a number ("90" or "3.5") into grade points.
+// Returns -1.0 if the grade is not valid.
+double gradeToPoints(string g)
+{
+    transform(g.begin(), g.end(), g.begin(),
+              [](unsigned char c)
+              { return static_cast<char>(toupper(c)); });
 
-// 1. Data entry function with input validation
+    if (g == "A+" || g == "A")
+        return 4.0;
+    if (g == "A-")
+        return 3.7;
+    if (g == "B+")
+        return 3.3;
+    if (g == "B")
+        return 3.0;
+    if (g == "B-")
+        return 2.7;
+    if (g == "C+")
+        return 2.3;
+    if (g == "C")
+        return 2.0;
+    if (g == "C-")
+        return 1.7;
+    if (g == "D+")
+        return 1.3;
+    if (g == "D")
+        return 1.0;
+    if (g == "D-")
+        return 0.7;
+    if (g == "F")
+        return 0.0;
 
-void addCourses(vector<string> &courses, vector<int> &credits, vector<string> &grades) {
+    // Numeric grade: a percentage (like 90) or points (like 3.5)
+    try
+    {
+        size_t used = 0;
+        double score = stod(g, &used);
+        if (used != g.size())
+            return -1.0; // e.g. "90abc"
+        if (score < 0 || score > 100)
+            return -1.0;
 
-    int courseCount;
+        if (score > 4.0)
+        {
+            if (score >= 90)
+                return 4.0;
+            else if (score >= 85)
+                return 3.7;
+            else if (score >= 80)
+                return 3.3;
+            else if (score >= 75)
+                return 3.0;
+            else if (score >= 70)
+                return 2.7;
+            else if (score >= 65)
+                return 2.3;
+            else if (score >= 60)
+                return 2.0;
+            else if (score >= 50)
+                return 1.0;
+            else
+                return 0.0;
+        }
+        return score;
+    }
+    catch (...)
+    {
+        return -1.0; // not a number at all
+    }
+}
 
-    cout << "How many courses you want to add? ";
+// Data entry with input validation.
+void addCourses(vector<string> &courses, vector<int> &credits, vector<string> &grades)
+{
+    int courseCount = readPositiveInt("How many courses do you want to add? ");
 
-    cin >> courseCount;
-
-
-
-    for (int i = 0; i < courseCount; i++) {
+    for (int i = 0; i < courseCount; i++)
+    {
+        cout << "\n--- Course " << i + 1 << " of " << courseCount << " ---\n";
 
         string course;
-
-        cout << "\nEnter course name: ";
-
-        cin >> course;
-
+        do
+        {
+            cout << "Enter course name: ";
+            getline(cin, course); // allows spaces in the name
+        } while (course.empty());
         courses.push_back(course);
 
-
-
-        int creditsHours;
-
-        cout << "Enter credit hours (e.g., 2, 3): ";
-
-        while (!(cin >> creditsHours)) {
-
-            cout << "Invalid input! Please enter a valid number for credit hours: ";
-
-            cin.clear();
-
-            cin.ignore(10000, '\n');
-
-        }
-
-        credits.push_back(creditsHours);
-
-
+        credits.push_back(readPositiveInt("Enter credit hours (e.g., 2, 3): "));
 
         string grade;
-
-        cout << "Enter grade (e.g., A, B+, or 90): ";
-
-        cin >> grade;
-
+        while (true)
+        {
+            cout << "Enter grade (e.g., A, B+, or 90): ";
+            cin >> grade;
+            cin.ignore(10000, '\n');
+            if (gradeToPoints(grade) >= 0)
+                break;
+            cout << "Invalid grade! ";
+        }
         grades.push_back(grade);
-
-        cout << "-------------------------\n";
-
     }
-
 }
 
-
-
-// 2. Helper function: Converts letter or number string into point value
-
-double gradeToPoints(string g) {
-
-    if (g == "A+" || g == "a+") return 4.0;
-
-    if (g == "A" || g == "a") return 4.0;
-
-    if (g == "A-" || g == "a-") return 3.7;
-
-    if (g == "B+" || g == "b+") return 3.3;
-
-    if (g == "B" || g == "b") return 3.0;
-
-    if (g == "B-" || g == "b-") return 2.7;
-
-    if (g == "C+" || g == "c+") return 2.3;
-
-    if (g == "C" || g == "c") return 2.0;
-
-    if (g == "C-" || g == "c-") return 1.7;
-
-    if (g == "D+" || g == "d+") return 1.3;
-
-    if (g == "D" || g == "d") return 1.0;
-
-    if (g == "D-" || g == "d-") return 0.7;
-
-    if (g == "F" || g == "f") return 0.0;
-
-
-
-    // If it's a numeric grade (like "90" or "3.5")
-
-    double score = stod(g);
-
-    if (score > 4.0) {
-
-        if (score >= 90) return 4.0;
-
-        else if (score >= 85) return 3.7;
-
-        else if (score >= 80) return 3.3;
-
-        else if (score >= 75) return 3.0;
-
-        else if (score >= 70) return 2.7;
-
-        else if (score >= 65) return 2.3;
-
-        else if (score >= 60) return 2.0;
-
-        else if (score >= 50) return 1.0;
-
-        else return 0.0;
-
-    }
-
-    return score;
-
-}
-
-
-
-// 3. Transcript summary function
-
-void printTranscript(const vector<string>& courses, const vector<int>& credits, const vector<string>& grades) {
-
+// Transcript summary.
+void printTranscript(const vector<string> &courses, const vector<int> &credits,
+                     const vector<string> &grades)
+{
     cout << "\n==============================\n";
-
     cout << "         COURSE SUMMARY       \n";
-
     cout << "==============================\n";
-
-    for (size_t i = 0; i < courses.size(); i++) {
-
-        double points = gradeToPoints(grades[i]);
-
-        cout << "Course: " << courses[i] 
-
-             << " | Credits: " << credits[i] 
-
-             << " | Grade: " << grades[i] 
-
-             << " (Points: " << points << ")" << endl;
-
+    for (size_t i = 0; i < courses.size(); i++)
+    {
+        cout << "Course: " << courses[i]
+             << " | Credits: " << credits[i]
+             << " | Grade: " << grades[i]
+             << " (Points: " << gradeToPoints(grades[i]) << ")" << endl;
     }
-
     cout << "------------------------------\n";
-
 }
 
-
-
-// 4. GPA calculation function
-
-double calculateGPA(const vector<string>& grades, const vector<int>& credits) {
-
+// GPA calculation: total (points x credits) divided by total credits.
+double calculateGPA(const vector<string> &grades, const vector<int> &credits)
+{
     double totalPoints = 0;
-
     int totalCredits = 0;
 
-
-
-    for (size_t i = 0; i < grades.size(); i++) {
-
-        double points = gradeToPoints(grades[i]);
-
-        totalPoints += points * credits[i];
-
+    for (size_t i = 0; i < grades.size(); i++)
+    {
+        totalPoints += gradeToPoints(grades[i]) * credits[i];
         totalCredits += credits[i];
-
     }
 
-
-
-    if (totalCredits == 0) return 0.0;
-
+    if (totalCredits == 0)
+        return 0.0;
     return totalPoints / totalCredits;
-
 }
 
-
-
-int main() {
-
+int main()
+{
     vector<string> courses;
-
     vector<int> credits;
-
     vector<string> grades;
 
-
+    cout << fixed << setprecision(2); // show 3.50 instead of 3.5
 
     addCourses(courses, credits, grades);
-
-
-
-    // Print the detailed transcript summary
-
     printTranscript(courses, credits, grades);
 
-
-
-    // Calculate and display final GPA
-
-    double finalGPA = calculateGPA(grades, credits);
-
-    cout << "Your Cumulative GPA is: " << finalGPA << endl;
-
-
-
+    cout << "Your Cumulative GPA is: " << calculateGPA(grades, credits) << endl;
     return 0;
-
 }
